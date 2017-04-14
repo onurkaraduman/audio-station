@@ -21,6 +21,8 @@ function connectWebsocket() {
         websocket = new WebSocket("ws://localhost:8081/stream");
         websocket.binaryType = "arraybuffer";
 
+        console.log("Websocket connected")
+
         websocket.onmessage = function (event) {
 
             var dataView = new DataView(event.data);
