@@ -6,7 +6,8 @@ import java.io.IOException;
 import java.util.List;
 
 /**
- * Link linkconverter interface
+ * Link converter interface
+ * The URL is converted to video url
  * Created by onur on 16.03.17.
  */
 public interface UrlConverter {

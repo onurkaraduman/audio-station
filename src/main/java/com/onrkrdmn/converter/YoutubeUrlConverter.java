@@ -4,6 +4,7 @@ import com.onrkrdmn.converter.data.VideoTypeList;
 import com.onrkrdmn.converter.model.Video;
 import com.onrkrdmn.converter.model.VideoMeta;
 import lombok.extern.log4j.Log4j;
+import org.springframework.stereotype.Service;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -23,6 +24,7 @@ import java.util.regex.Pattern;
  * Created by onur on 16.03.17.
  */
 @Log4j
+@Service
 public class YoutubeUrlConverter implements UrlConverter {
 
     @Override
@@ -53,7 +55,7 @@ public class YoutubeUrlConverter implements UrlConverter {
         }
 
         if (matches.size() != 1) {
-            log.error("Found zero or too many stream maps.");
+            log.error("Found zero or too many streamer maps.");
             throw new IllegalArgumentException("Nothing found");
         }
 
@@ -81,6 +83,13 @@ public class YoutubeUrlConverter implements UrlConverter {
             String um = null;
             if (m3.find()) {
                 um = m3.group(1);
+            }
+            else{
+                p3 = Pattern.compile("url=(.*?)[]");
+                m3 = p3.matcher(ppUrl);
+                if (m3.find()) {
+                    um = m3.group(1);
+                }
             }
 
             if (itag != null && sig != null && um != null) {

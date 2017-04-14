@@ -15,5 +15,5 @@ public interface UrlValidator {
      * @return
      * @throws ValidateException
      */
-    public boolean validate(String url) throws ValidateException;
+    public boolean validate(String url);
 }

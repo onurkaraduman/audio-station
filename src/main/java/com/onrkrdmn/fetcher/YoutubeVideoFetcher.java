@@ -1,47 +1,64 @@
 package com.onrkrdmn.fetcher;
 
+import com.onrkrdmn.core.AudioBuffer;
+import com.onrkrdmn.core.StaticApplicationContext;
+import com.onrkrdmn.core.ThreadService;
 import com.xuggle.mediatool.IMediaWriter;
 import com.xuggle.mediatool.ToolFactory;
 import com.xuggle.xuggler.*;
 import com.xuggle.xuggler.io.XugglerIO;
+import lombok.extern.log4j.Log4j;
 
 import java.io.*;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
 /**
+ * The class is charge of fetching data from youtube
+ * and buffers in {@link AudioBuffer}
  * Created by onur on 29.03.17.
  */
-public class YoutubeVideoFetcher {
+@Log4j
+public class YoutubeVideoFetcher implements VideoFetcher, Runnable {
 
-    private static final String inputFilename = "source.3gp";
-    private static final String outputFilename = "dest.mp3";
-    private static final String url = "https://r20---sn-4g57kn67.googlevideo.com/videoplayback?key=yt6&lmt=1490333138127650&dur=8.428&initcwndbps=3657500&ipbits=0&id=o-AIG_ywHnt-3YDCLjBbVxzJhpzKupASDaktqLOQhrVt8p&ratebypass=yes&ip=82.195.74.114&sparams=dur%2Cei%2Cid%2Cinitcwndbps%2Cip%2Cipbits%2Citag%2Clmt%2Cmime%2Cmm%2Cmn%2Cms%2Cmv%2Cpl%2Cratebypass%2Crequiressl%2Csource%2Cupn%2Cexpire&mv=m&upn=di5Ue7PTj2A&pl=22&itag=22&mt=1490728472&ms=au&ei=m7baWJ2-C5eQWvOVgoAF&mn=sn-4g57kn67&mm=31&mime=video%2Fmp4&expire=1490750203&requiressl=yes&signature=D7793924CEF3597DFA0C0D2EC393BA1CFE899858.15B70638BC73F49A074C59A645599B3423BC3035&source=youtube&signature=D7793924CEF3597DFA0C0D2EC393BA1CFE899858.15B70638BC73F49A074C59A645599B3423BC3035";
+    private String PROCESS_KEY = "youtube.fetcher";
 
-    public void fetcher() throws IOException {
+    private final String url;
 
-        Path p = Paths.get(url);
-        OutputStream os = new FileOutputStream(outputFilename);
-        streamToSource(os, p);
+    private final AudioBuffer videoBuffer;
+
+    private final ThreadService threadService;
+
+    private boolean isDone = false;
+
+    public YoutubeVideoFetcher(String url, AudioBuffer videoBuffer) {
+        this.url = url;
+        this.videoBuffer = videoBuffer;
+        this.threadService = (ThreadService) StaticApplicationContext.getBean("threadService");
+    }
+
+    @Override
+    public void fetch() throws IOException, InterruptedException {
+        this.threadService.execute(this.PROCESS_KEY, this);
     }
 
 
-    private void streamToSource(OutputStream source, Path path) throws IOException {
+    private void streamToSource(Path path) throws IOException, InterruptedException {
 
         byte[] buffer = new byte[4096];
         PipedInputStream pis = new PipedInputStream();
         PipedOutputStream pos = new PipedOutputStream(pis);
         convertToMP3Xuggler(path, pos);
 
-        System.out.println("start streaming");
         int nRead = 0;
+        int index = 0;
+        log.info(String.format("Fetching started. Url: %s ", this.url));
         while ((nRead = pis.read(buffer)) != -1) {
-            source.write(buffer, 0, nRead);
+            this.videoBuffer.put(index++, buffer, 0, nRead);
         }
+        this.videoBuffer.setDone(true);
+        log.info("Fetching done.............");
         pis.close();
-
-        System.out.println("end : " + path);
-
     }
 
     private void convertToMP3Xuggler(Path path, PipedOutputStream pos) throws FileNotFoundException {
@@ -72,9 +89,9 @@ public class YoutubeVideoFetcher {
 
 
         for (int i = 0; i < audioContainer.getNumStreams(); i++) {
-            // Find the stream object
+            // Find the streamer object
             IStream stream = audioContainer.getStream(i);
-            // Get the pre-configured decoder that can decode this stream;
+            // Get the pre-configured decoder that can decode this streamer;
             IStreamCoder coder = stream.getStreamCoder();
             if (coder.getCodecType() == ICodec.Type.CODEC_TYPE_AUDIO) {
                 audioStreamId = i;
@@ -82,9 +99,9 @@ public class YoutubeVideoFetcher {
             }
         }
         if (audioStreamId < 0) {
-            throw new IllegalArgumentException("cannot find audio stream in the current file : " + path.toString());
+            throw new IllegalArgumentException("cannot find audio streamer in the current file : " + path.toString());
         }
-        System.out.println("found audio stream = " + audioStreamId);
+        System.out.println("found audio streamer = " + audioStreamId);
 
         IStreamCoder coderAudio = audioContainer.getStream(audioStreamId).getStreamCoder();
 
@@ -116,9 +133,9 @@ public class YoutubeVideoFetcher {
             public void run() {
                 int a = 0;
                 while (audioContainer.readNextPacket(packet) >= 0) {
-                    System.out.println("debug::: " + a++);
+
                 /*
-                 * Now we have a packet, let's see if it belongs to our audio stream
+                 * Now we have a packet, let's see if it belongs to our audio streamer
                  */
                     if (packet.getStreamIndex() == audioStreamId) {
                     /*
@@ -167,6 +184,7 @@ public class YoutubeVideoFetcher {
                 coderAudio.close();
                 audioContainer.close();
                 mediaWriter.close();
+                YoutubeVideoFetcher.this.isDone = true;
                 try {
                     pos.close();
                 } catch (IOException e) {
@@ -177,4 +195,16 @@ public class YoutubeVideoFetcher {
         }.start();
     }
 
+    @Override
+    public void run() {
+        log.info("Fetch is starting........");
+        Path path = Paths.get(url);
+        try {
+            streamToSource(path);
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (InterruptedException e) {
+            log.error("Fetch exception", e);
+        }
+    }
 }

@@ -10,16 +10,16 @@ import static org.assertj.core.api.Assertions.*;
 public class ValidateHelperTest {
     @Test
     public void validateUrl() throws Exception {
-        boolean result = ValidateHelper.validateUrl("https://www.youtube.com/watch?v=JOslX79eXpk");
-        boolean result2 = ValidateHelper.validateUrl("http://invalidURL^$&%$&^");
+        boolean result = ValidateHelper.isValidUrl("https://www.youtube.com/watch?v=JOslX79eXpk");
+        boolean result2 = ValidateHelper.isValidUrl("http://invalidURL^$&%$&^");
         assertThat(result).isTrue();
         assertThat(result2).isFalse();
     }
 
     @Test
     public void validateYoutubeUrl() throws Exception {
-        boolean result = ValidateHelper.validateYoutubeUrl("https://www.youtube.com/watch?v=JOslX79eXpk");
-        boolean result2 = ValidateHelper.validateYoutubeUrl("http://invalidURL^$&%$&^");
+        boolean result = ValidateHelper.isValidYoutubeUrl("https://www.youtube.com/watch?v=JOslX79eXpk");
+        boolean result2 = ValidateHelper.isValidYoutubeUrl("http://invalidURL^$&%$&^");
         assertThat(result).isTrue();
         assertThat(result2).isFalse();
     }

@@ -20,7 +20,7 @@ public class YoutubeUrlValidator implements UrlValidator {
      * @throws ValidateException
      */
     @Override
-    public boolean validate(String url) throws ValidateException {
+    public boolean validate(String url) {
         boolean result1 = ValidateHelper.isValidUrl(url);
         boolean result2 = ValidateHelper.isValidYoutubeUrl(url);
         if (result1 && result2) {

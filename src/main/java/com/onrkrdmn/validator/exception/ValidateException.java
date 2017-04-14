@@ -8,7 +8,7 @@ package com.onrkrdmn.validator.exception;
  */
 @lombok.Getter
 @lombok.Setter
-public class ValidateException extends Exception {
+public class ValidateException extends RuntimeException {
     private String url;
 
     public ValidateException(String url) {
