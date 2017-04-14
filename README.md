@@ -3,7 +3,7 @@
 [![Build Status](https://travis-ci.org/onurkaraduman/audio-station.svg?branch=master)](https://travis-ci.org/OnurKaraduman/audio-station)
 
 
-This is the project to get audio streaming by youtube video url.
+This is the project to get audio from youtube video as streaming.
 
 **TODO**
 1.Code refactoring
